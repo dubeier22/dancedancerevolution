@@ -1,0 +1,139 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+
+public class Note : MonoBehaviour
+{
+    public float beat;
+    public Lane lane;
+    public Conductor conductor;
+    public float beatsInAdvance;
+    public float durationInBeats;
+
+    public Vector2 spawnPos;
+    public Vector2 hitPos;
+    public Vector2 removePos;
+
+    public bool isHit = false;
+    public bool isHolding = false;
+    public bool completed = false;
+    private bool releaseJudged = false;
+
+    public float endBeat;
+
+    public float tickInterval = 0.25f;
+    private float nextTickBeat;
+
+    public Transform tail;
+
+    public void Initialize(float beat, Lane lane, Conductor conductor, float beatsInAdvance, float durationInBeats)
+    {
+        this.beat = beat;
+        this.lane = lane;
+        this.conductor = conductor;
+        this.beatsInAdvance = beatsInAdvance;
+        this.durationInBeats = durationInBeats;
+
+        spawnPos = lane.spawnPoint.position;
+        hitPos = lane.hitPoint.position;
+        removePos = lane.removePoint.position;
+
+        transform.position = spawnPos;
+
+        endBeat = beat + durationInBeats;
+
+        if (durationInBeats > 0 && tail != null)
+        {
+            tail.localScale = new Vector3(tail.localScale.x, 0f, 1f);
+        }
+    }
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        if (completed) return;
+
+        float songBeat = conductor.songPositionInBeats;
+        float beatsUntilHit = beat - songBeat;
+
+        // Move head
+        Vector2 headPos = spawnPos + (hitPos - spawnPos) * (1f - beatsUntilHit / beatsInAdvance);
+        transform.position = new Vector3(headPos.x, headPos.y, 0f);
+
+        // Move and grow tail for hold notes
+        if (durationInBeats > 0 && tail != null)
+        {
+            // Full tail length based on duration in beats
+            float fullTailLength = durationInBeats * lane.unitsPerBeat;
+
+            // Current head position
+            headPos = transform.position;
+
+            // Distance from head to spawn
+            float distanceToSpawn = headPos.y - spawnPos.y; // negative if head below spawn
+            float tailLength = Mathf.Min(fullTailLength, Mathf.Abs(distanceToSpawn));
+
+            // Update tail scale (Y-axis)
+            tail.localScale = new Vector3(tail.localScale.x, tailLength, 1f);
+
+            // Position tail: center between head and spawn
+            Vector2 tailPos = new Vector2(headPos.x, headPos.y + tailLength / 2f);
+            tail.position = new Vector3(tailPos.x, tailPos.y, 0f);
+        }
+
+        if (isHolding && !releaseJudged)
+        {
+            while (songBeat >= nextTickBeat && nextTickBeat < endBeat)
+            {
+                lane.HoldTick(this);
+                nextTickBeat += tickInterval;
+            }
+        }
+
+        // tap notes miss if past remove point
+        if (!isHit && durationInBeats == 0 && transform.position.y < removePos.y)
+        {
+            lane.Miss();
+            completed = true;
+            Destroy(gameObject);
+        }
+
+        // hold notes complete if reach endBeat
+        if (isHolding && songBeat >= endBeat && !releaseJudged)
+        {
+            releaseJudged = true;
+            lane.ReleaseJudgement(this);
+            Destroy(gameObject);
+        }
+    }
+
+
+    public void Hit()
+    {
+        isHit = true;
+
+        if (durationInBeats > 0)
+        {
+            isHolding = true;
+            nextTickBeat = beat + tickInterval;
+        }
+        else
+            Destroy(gameObject);
+    }
+
+    public void ReleaseEarly()
+    {
+        if (!isHolding || releaseJudged)
+            return;
+
+        releaseJudged = true;
+        lane.ReleaseJudgement(this);
+        Destroy(gameObject);
+    }
+}
