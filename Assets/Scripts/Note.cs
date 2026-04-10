@@ -46,12 +46,29 @@ public class Note : MonoBehaviour
         {
             tail.localScale = new Vector3(tail.localScale.x, 0f, 1f);
         }
+
+        SetArrowDirection();
     }
 
     // Start is called before the first frame update
     void Start()
     {
         
+    }
+
+    void SetArrowDirection()
+    {
+        float rotation = 0f;
+
+        switch (lane.laneIndex)
+        {
+            case 0: rotation = 90f; break; // Left
+            case 1: rotation = 0f; break;  // Up
+            case 2: rotation = 180f; break; // Down
+            case 3: rotation = 270f; break;   // Right
+        }
+
+        transform.rotation = Quaternion.Euler(0, 0, rotation);
     }
 
     // Update is called once per frame
