@@ -37,11 +37,41 @@ public class JudgementUI : MonoBehaviour
     IEnumerator ShowRoutine(JudgementType type)
     {
         judgementText.text = type.ToString();
-        judgementText.alpha = 1f;
-        judgementText.transform.localScale = Vector3.one * 1.2f;
 
-        yield return new WaitForSeconds(displayTime);
+        // Set color based on judgement
+        judgementText.color = GetColor(type);
+
+        float time = 0f;
+        float duration = 0.4f;
+
+        while (time < duration)
+        {
+            time += Time.deltaTime;
+
+            float t = time / duration;
+
+            // scale pop
+            float scale = Mathf.Lerp(1.5f, 1f, t);
+            judgementText.transform.localScale = Vector3.one * scale;
+
+            // fade out
+            judgementText.alpha = 1f - t;
+
+            yield return null;
+        }
 
         judgementText.alpha = 0f;
+    }
+
+    Color GetColor(JudgementType type)
+    {
+        switch (type)
+        {
+            case JudgementType.Perfect: return Color.yellow;
+            case JudgementType.Great: return Color.green;
+            case JudgementType.Good: return Color.cyan;
+            case JudgementType.Miss: return Color.red;
+            default: return Color.white;
+        }
     }
 }

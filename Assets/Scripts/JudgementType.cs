@@ -4,7 +4,7 @@ using UnityEngine;
 
 public enum JudgementType
 {
-    Stellar,
+    Perfect,
     Great,
     Good,
     Miss,

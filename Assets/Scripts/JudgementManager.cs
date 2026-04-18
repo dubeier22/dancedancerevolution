@@ -12,7 +12,7 @@ public class JudgementManager : MonoBehaviour
     public static event Action<JudgementType> OnJudgement;
     public static event Action<int> OnComboChanged;
 
-    public float stellarWindow = 0.05f;
+    public float perfectWindow = 0.05f;
     public float greatWindow = 0.15f;
     public float goodWindow = 0.25f;
 
@@ -31,9 +31,9 @@ public class JudgementManager : MonoBehaviour
     {
         JudgementType result;
 
-        if (Mathf.Abs(timingDifference) <= stellarWindow)
+        if (Mathf.Abs(timingDifference) <= perfectWindow)
         {
-            result = JudgementType.Stellar;
+            result = JudgementType.Perfect;
             score += 300;
             combo++;
         }
